@@ -1,0 +1,640 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin xmlns='http://www.urbancode.com/PluginXMLSchema_v1'>
+    <header>
+        <identifier id='com.urbancode.air.plugin.AWSElasticBeanstalk' version='1' name='AWSElasticBeanstalk'/>
+        <description>
+			This plugin provides steps for deploying an application into AWS Elastic Beanstalk.
+        </description>
+        <tag>Cloud/AWS Elastic Beanstalk</tag>
+    </header>
+    <!-- ==================================== -->
+    <!--   PLUGIN STEPS                       -->
+    <!-- ==================================== -->
+    <step-type name='Application Exists'>
+        <description>Check whether the specified Application already exists.</description>
+        <properties>
+            <property name='accessKeyId' required='true'>
+                <property-ui type='textBox' label='Access Key Id' default-value="${p:system/EC2AccessKeyId}"
+                             description='The EC2 access key id to use to login.'/>
+            </property>
+            <property name='secretKey' required='true'>
+                <property-ui type='textBox' label='Secret Key' default-value="${p:system/EC2SecretKey}"
+                             description='The EC2 Secret Key'/>
+            </property>
+            <property name='region' required='true'>
+                <property-ui description="Select the Elastic Beanstalk region that you want to use" label="Region"
+                             type="selectBox"/>
+                <value label="US East (N. Virginia)">US_EAST_1</value>
+                <value label="US East (Ohio)">US_EAST_2</value>
+                <value label="US West (N. California)">US_WEST_1</value>
+                <value label="US West (Oregon)">US_WEST_2</value>
+                <value label="Canada (Central)">CA_CENTRAL_1</value>
+                <value label="Asia Pacific (Mumbai)">AP_SOUTH_1</value>
+                <value label="Asia Pacific (Tokyo)">AP_NORTHEAST_1</value>
+                <value label="Asia Pacific (Seoul)">AP_NORTHEAST_2</value>
+                <value label="Asia Pacific (Osaka-Local)">AP_NORTHEAST_3</value>
+                <value label="Asia Pacific (Singapore)">AP_SOUTHEAST_1</value>
+                <value label="Asia Pacific (Sydney)">AP_SOUTHEAST_2</value>
+                <value label="China (Beijing)">CN_NORTH_1</value>
+                <value label="China (Ningxia)">CN_NORTHWEST_1</value>
+                <value label="EU (Frankfurt)">EU_CENTRAL_1</value>
+                <value label="EU (Ireland)">EU_WEST_1</value>
+                <value label="EU (London)">EU_WEST_2</value>
+                <value label="EU (Paris)">EU_WEST_3</value>
+                <value label="South America (São Paulo)">SA_EAST_1</value>
+                <value label="AWS GovCloud (US)">GovCloud</value>
+            </property>
+            <property name='appName' required='true'>
+                <property-ui type='textBox' label='Application Name' default-value="${p:application.name}"
+                             description='Beanstalk Application Name'/>
+            </property>
+			<property name="debugMode" required="false">
+                <property-ui type="checkBox" label="Debug Output" hidden="true"
+                             description="Select this option to display debug output during execution."/>
+            </property>
+        </properties>
+        <post-processing><![CDATA[
+ if (properties.get("exitCode") != 0) {
+    properties.put(new java.lang.String("Status"), new java.lang.String("Failure"));
+ }
+ else {
+    properties.put("Status", "Success");
+ }
+ ]]></post-processing>
+        <command program='${GROOVY_HOME}/bin/groovy'>
+            <arg value='-cp'/>
+            <arg path='classes:lib/*'/>
+            <arg file='application_exists.groovy'/>
+            <arg file='${PLUGIN_INPUT_PROPS}'/>
+            <arg file='${PLUGIN_OUTPUT_PROPS}'/>
+        </command>
+    </step-type>
+
+    <step-type name='Create Application'>
+        <description>Create a new Elastic Beanstalk Application.</description>
+        <properties>
+            <property name='accessKeyId' required='true'>
+                <property-ui type='textBox' label='Access Key Id' default-value="${p:system/EC2AccessKeyId}"
+                             description='The EC2 access key id to use to login.'/>
+            </property>
+            <property name='secretKey' required='true'>
+                <property-ui type='textBox' label='Secret Key' default-value="${p:system/EC2SecretKey}"
+                             description='The EC2 Secret Key'/>
+            </property>
+            <property name='region' required='true'>
+                <property-ui description="Select the Elastic Beanstalk region that you want to use" label="Region"
+                             type="selectBox"/>
+                <value label="US East (N. Virginia)">US_EAST_1</value>
+                <value label="US East (Ohio)">US_EAST_2</value>
+                <value label="US West (N. California)">US_WEST_1</value>
+                <value label="US West (Oregon)">US_WEST_2</value>
+                <value label="Canada (Central)">CA_CENTRAL_1</value>
+                <value label="Asia Pacific (Mumbai)">AP_SOUTH_1</value>
+                <value label="Asia Pacific (Tokyo)">AP_NORTHEAST_1</value>
+                <value label="Asia Pacific (Seoul)">AP_NORTHEAST_2</value>
+                <value label="Asia Pacific (Osaka-Local)">AP_NORTHEAST_3</value>
+                <value label="Asia Pacific (Singapore)">AP_SOUTHEAST_1</value>
+                <value label="Asia Pacific (Sydney)">AP_SOUTHEAST_2</value>
+                <value label="China (Beijing)">CN_NORTH_1</value>
+                <value label="China (Ningxia)">CN_NORTHWEST_1</value>
+                <value label="EU (Frankfurt)">EU_CENTRAL_1</value>
+                <value label="EU (Ireland)">EU_WEST_1</value>
+                <value label="EU (London)">EU_WEST_2</value>
+                <value label="EU (Paris)">EU_WEST_3</value>
+                <value label="South America (São Paulo)">SA_EAST_1</value>
+                <value label="AWS GovCloud (US)">GovCloud</value>
+            </property>
+            <property name='appName' required='true'>
+                <property-ui type='textBox' label='Application Name' default-value="${p:application.name}"
+                             description='Beanstalk Application Name'/>
+            </property>
+            <property name="debugMode" required="false">
+                <property-ui type="checkBox" label="Debug Output" hidden="true"
+                             description="Select this option to display debug output during execution."/>
+            </property>			
+        </properties>
+        <post-processing><![CDATA[
+ if (properties.get("exitCode") != 0) {
+    properties.put(new java.lang.String("Status"), new java.lang.String("Failure"));
+ }
+ else {
+    properties.put("Status", "Success");
+ }
+ ]]></post-processing>
+        <command program='${GROOVY_HOME}/bin/groovy'>
+            <arg value='-cp'/>
+            <arg path='classes:lib/*'/>
+            <arg file='create_application.groovy'/>
+            <arg file='${PLUGIN_INPUT_PROPS}'/>
+            <arg file='${PLUGIN_OUTPUT_PROPS}'/>
+        </command>
+    </step-type>
+
+    <step-type name='List Stacks'>
+        <description>List all of the Solution Stack Names for an Elastic Beanstalk Environment and allow the user to
+            select one.
+        </description>
+        <properties>
+            <property name='accessKeyId' required='true'>
+                <property-ui type='textBox' label='Access Key Id' default-value="${p:system/EC2AccessKeyId}"
+                             description='The EC2 access key id to use to login.'/>
+            </property>
+            <property name='secretKey' required='true'>
+                <property-ui type='textBox' label='Secret Key' default-value="${p:system/EC2SecretKey}"
+                             description='The EC2 Secret Key'/>
+            </property>
+            <property name='region' required='true'>
+                <property-ui description="Select the Elastic Beanstalk region that you want to use" label="Region"
+                             type="selectBox"/>
+                <value label="US East (N. Virginia)">US_EAST_1</value>
+                <value label="US East (Ohio)">US_EAST_2</value>
+                <value label="US West (N. California)">US_WEST_1</value>
+                <value label="US West (Oregon)">US_WEST_2</value>
+                <value label="Canada (Central)">CA_CENTRAL_1</value>
+                <value label="Asia Pacific (Mumbai)">AP_SOUTH_1</value>
+                <value label="Asia Pacific (Tokyo)">AP_NORTHEAST_1</value>
+                <value label="Asia Pacific (Seoul)">AP_NORTHEAST_2</value>
+                <value label="Asia Pacific (Osaka-Local)">AP_NORTHEAST_3</value>
+                <value label="Asia Pacific (Singapore)">AP_SOUTHEAST_1</value>
+                <value label="Asia Pacific (Sydney)">AP_SOUTHEAST_2</value>
+                <value label="China (Beijing)">CN_NORTH_1</value>
+                <value label="China (Ningxia)">CN_NORTHWEST_1</value>
+                <value label="EU (Frankfurt)">EU_CENTRAL_1</value>
+                <value label="EU (Ireland)">EU_WEST_1</value>
+                <value label="EU (London)">EU_WEST_2</value>
+                <value label="EU (Paris)">EU_WEST_3</value>
+                <value label="South America (São Paulo)">SA_EAST_1</value>
+                <value label="AWS GovCloud (US)">GovCloud</value>
+            </property>
+            <property name="stackFilter">
+                <property-ui description="Filter list of stack using keywor"
+                             label="Stack Filter" type="textBox"/>
+            </property>
+            <property name="userInterventionRequired">
+                <property-ui type="checkBox" label="Display Results Selection Dialog" default-value="true"
+                             description="Controls whether the information should be displayed"/>
+            </property>
+            <property name="keyColumnName">
+                <property-ui default-value="Name" description="Column name to be used for selection" hidden="true"
+                             label="Key column Name for Selection" type="textBox"/>
+            </property>
+			<property name="debugMode" required="false">
+                <property-ui type="checkBox" label="Debug Output" hidden="true"
+                             description="Select this option to display debug output during execution."/>
+            </property>
+        </properties>
+        <post-processing><![CDATA[
+ if (properties.get("exitCode") != 0) {
+    properties.put(new java.lang.String("Status"), new java.lang.String("Failure"));
+ }
+ else {
+    properties.put("Status", "Success");
+ }
+ ]]></post-processing>
+        <command program='${GROOVY_HOME}/bin/groovy'>
+            <arg value='-cp'/>
+            <arg path='classes:lib/*'/>
+            <arg file='list_stacks.groovy'/>
+            <arg file='${PLUGIN_INPUT_PROPS}'/>
+            <arg file='${PLUGIN_OUTPUT_PROPS}'/>
+        </command>
+    </step-type>
+
+    <step-type name='Environment Exists'>
+        <description>Check whether the specified Environment already exists in the Application.</description>
+        <properties>
+            <property name='accessKeyId' required='true'>
+                <property-ui type='textBox' label='Access Key Id' default-value="${p:system/EC2AccessKeyId}"
+                             description='The EC2 access key id to use to login.'/>
+            </property>
+            <property name='secretKey' required='true'>
+                <property-ui type='textBox' label='Secret Key' default-value="${p:system/EC2SecretKey}"
+                             description='The EC2 Secret Key'/>
+            </property>
+            <property name='region' required='true'>
+                <property-ui description="Select the Elastic Beanstalk region that you want to use" label="Region"
+                             type="selectBox"/>
+                <value label="US East (N. Virginia)">US_EAST_1</value>
+                <value label="US East (Ohio)">US_EAST_2</value>
+                <value label="US West (N. California)">US_WEST_1</value>
+                <value label="US West (Oregon)">US_WEST_2</value>
+                <value label="Canada (Central)">CA_CENTRAL_1</value>
+                <value label="Asia Pacific (Mumbai)">AP_SOUTH_1</value>
+                <value label="Asia Pacific (Tokyo)">AP_NORTHEAST_1</value>
+                <value label="Asia Pacific (Seoul)">AP_NORTHEAST_2</value>
+                <value label="Asia Pacific (Osaka-Local)">AP_NORTHEAST_3</value>
+                <value label="Asia Pacific (Singapore)">AP_SOUTHEAST_1</value>
+                <value label="Asia Pacific (Sydney)">AP_SOUTHEAST_2</value>
+                <value label="China (Beijing)">CN_NORTH_1</value>
+                <value label="China (Ningxia)">CN_NORTHWEST_1</value>
+                <value label="EU (Frankfurt)">EU_CENTRAL_1</value>
+                <value label="EU (Ireland)">EU_WEST_1</value>
+                <value label="EU (London)">EU_WEST_2</value>
+                <value label="EU (Paris)">EU_WEST_3</value>
+                <value label="South America (São Paulo)">SA_EAST_1</value>
+                <value label="AWS GovCloud (US)">GovCloud</value>
+            </property>
+            <property name='appName' required='true'>
+                <property-ui type='textBox' label='Application Name' default-value="${p:application.name}"
+                             description='Beanstalk Application Name'/>
+            </property>
+            <property name='envName' required='true'>
+                <property-ui type='textBox' label='Environment Name' default-value="${p:environment.name}"
+                             description='Beanstalk Environment Name'/>
+            </property>
+            <property name="debugMode" required="false">
+                <property-ui type="checkBox" label="Debug Output" hidden="true"
+                             description="Select this option to display debug output during execution."/>
+            </property>			
+        </properties>
+        <post-processing><![CDATA[
+ if (properties.get("exitCode") != 0) {
+    properties.put(new java.lang.String("Status"), new java.lang.String("Failure"));
+ }
+ else {
+    properties.put("Status", "Success");
+ }
+ ]]></post-processing>
+        <command program='${GROOVY_HOME}/bin/groovy'>
+            <arg value='-cp'/>
+            <arg path='classes:lib/*'/>
+            <arg file='environment_exists.groovy'/>
+            <arg file='${PLUGIN_INPUT_PROPS}'/>
+            <arg file='${PLUGIN_OUTPUT_PROPS}'/>
+        </command>
+    </step-type>
+
+    <step-type name='Create Environment'>
+        <description>Create a new Elastic Beanstalk Environment.</description>
+        <properties>
+            <property name='accessKeyId' required='true'>
+                <property-ui type='textBox' label='Access Key Id' default-value="${p:system/EC2AccessKeyId}"
+                             description='The EC2 access key id to use to login.'/>
+            </property>
+            <property name='secretKey' required='true'>
+                <property-ui type='textBox' label='Secret Key' default-value="${p:system/EC2SecretKey}"
+                             description='The EC2 Secret Key'/>
+            </property>
+            <property name='region' required='true'>
+                <property-ui description="Select the Elastic Beanstalk region that you want to use" label="Region"
+                             type="selectBox"/>
+                <value label="US East (N. Virginia)">US_EAST_1</value>
+                <value label="US East (Ohio)">US_EAST_2</value>
+                <value label="US West (N. California)">US_WEST_1</value>
+                <value label="US West (Oregon)">US_WEST_2</value>
+                <value label="Canada (Central)">CA_CENTRAL_1</value>
+                <value label="Asia Pacific (Mumbai)">AP_SOUTH_1</value>
+                <value label="Asia Pacific (Tokyo)">AP_NORTHEAST_1</value>
+                <value label="Asia Pacific (Seoul)">AP_NORTHEAST_2</value>
+                <value label="Asia Pacific (Osaka-Local)">AP_NORTHEAST_3</value>
+                <value label="Asia Pacific (Singapore)">AP_SOUTHEAST_1</value>
+                <value label="Asia Pacific (Sydney)">AP_SOUTHEAST_2</value>
+                <value label="China (Beijing)">CN_NORTH_1</value>
+                <value label="China (Ningxia)">CN_NORTHWEST_1</value>
+                <value label="EU (Frankfurt)">EU_CENTRAL_1</value>
+                <value label="EU (Ireland)">EU_WEST_1</value>
+                <value label="EU (London)">EU_WEST_2</value>
+                <value label="EU (Paris)">EU_WEST_3</value>
+                <value label="South America (São Paulo)">SA_EAST_1</value>
+                <value label="AWS GovCloud (US)">GovCloud</value>
+            </property>
+            <property name='appName' required='true'>
+                <property-ui type='textBox' label='Application Name' default-value="${p:application.name}"
+                             description='Beanstalk Application Name'/>
+            </property>
+            <property name='envName' required='true'>
+                <property-ui type='textBox' label='Environment Name' default-value="${p:environment.name}"
+                             description='Beanstalk Environment Name'/>
+            </property>
+            <property name='cNAMEPrefix'>
+                <property-ui type='textBox' label='Domain'
+                             description='First part of environments Domain name (cNAME Prefix)'/>
+            </property>
+            <property name='stackName' required='true'>
+                <property-ui type='textBox' label='Solution Stack Name' default-value="${p:prevStep/UIP}"
+                             description='Solution Stack Name for the Environment'/>
+            </property>
+            <property name='configOptions'>
+                <property-ui type='textAreaBox' label='Configuration Option Settings'
+                             default-value="aws:autoscaling:launchconfiguration->IamInstanceProfile->aws-elasticbeanstalk-ec2-role"
+                             description='Specify a new line separated list of Configuration Options to set in the form of
+                       namespace->option->value. Eg: aws:autoscaling:launchconfiguration->InstanceType->t2.medium will set the launched instance type to medium. '/>
+            </property>
+            <property name="debugMode" required="false">
+                <property-ui type="checkBox" label="Debug Output" hidden="true"
+                             description="Select this option to display debug output during execution."/>
+            </property>			
+        </properties>
+        <post-processing><![CDATA[
+ if (properties.get("exitCode") != 0) {
+    properties.put(new java.lang.String("Status"), new java.lang.String("Failure"));
+ }
+ else {
+    properties.put("Status", "Success");
+ }
+ ]]></post-processing>
+        <command program='${GROOVY_HOME}/bin/groovy'>
+            <arg value='-cp'/>
+            <arg path='classes:lib/*'/>
+            <arg file='create_environment.groovy'/>
+            <arg file='${PLUGIN_INPUT_PROPS}'/>
+            <arg file='${PLUGIN_OUTPUT_PROPS}'/>
+        </command>
+    </step-type>
+
+    <step-type name='Deploy into Elastic Beanstalk'>
+        <description>Deploy an application into Elastic Beanstalk.</description>
+        <properties>
+            <property name='accessKeyId' required='true'>
+                <property-ui type='textBox' label='Access Key Id' default-value="${p:system/EC2AccessKeyId}"
+                             description='The EC2 access key id to use to login.'/>
+            </property>
+            <property name='secretKey' required='true'>
+                <property-ui type='textBox' label='Secret Key' default-value="${p:system/EC2SecretKey}"
+                             description='The EC2 Secret Key'/>
+            </property>
+            <property name='region' required='true'>
+                <property-ui description="Select the Elastic Beanstalk region that you want to use" label="Region"
+                             type="selectBox"/>
+                <value label="US East (N. Virginia)">US_EAST_1</value>
+                <value label="US East (Ohio)">US_EAST_2</value>
+                <value label="US West (N. California)">US_WEST_1</value>
+                <value label="US West (Oregon)">US_WEST_2</value>
+                <value label="Canada (Central)">CA_CENTRAL_1</value>
+                <value label="Asia Pacific (Mumbai)">AP_SOUTH_1</value>
+                <value label="Asia Pacific (Tokyo)">AP_NORTHEAST_1</value>
+                <value label="Asia Pacific (Seoul)">AP_NORTHEAST_2</value>
+                <value label="Asia Pacific (Osaka-Local)">AP_NORTHEAST_3</value>
+                <value label="Asia Pacific (Singapore)">AP_SOUTHEAST_1</value>
+                <value label="Asia Pacific (Sydney)">AP_SOUTHEAST_2</value>
+                <value label="China (Beijing)">CN_NORTH_1</value>
+                <value label="China (Ningxia)">CN_NORTHWEST_1</value>
+                <value label="EU (Frankfurt)">EU_CENTRAL_1</value>
+                <value label="EU (Ireland)">EU_WEST_1</value>
+                <value label="EU (London)">EU_WEST_2</value>
+                <value label="EU (Paris)">EU_WEST_3</value>
+                <value label="South America (São Paulo)">SA_EAST_1</value>
+                <value label="AWS GovCloud (US)">GovCloud</value>
+            </property>
+            <property name='appName' required='true'>
+                <property-ui type='textBox' label='Application Name' default-value="${p:application.name}"
+                             description='Beanstalk Application Name'/>
+            </property>
+            <property name='envName' required='true'>
+                <property-ui type='textBox' label='Environment Name' default-value="${p:environment.name}"
+                             description='Beanstalk Environment Name'/>
+            </property>
+            <property name='versionLabel' required="true">
+                <property-ui type='textBox' label='Application Version' default-value="${p:version.name}"
+                             description='The name of the version to be created. '/>
+            </property>
+            <property name='baseDir'>
+                <property-ui type='textBox' label='Base Directory'
+                             description='The root directory where version files are stored.'/>
+            </property>
+            <property name='versionFile' required="true">
+                <property-ui type='textBox' label='Version File'
+                             description='The name of the packaged file, e.g. .zip/.war to be uploaded. '/>
+            </property>
+            <property name='s3BucketName'>
+                <property-ui type='textBox' label='S3 Bucket Name'
+                             description='The S3 Bucket to upload to. '/>
+            </property>
+            <property name='s3KeyPrefix'>
+                <property-ui type='textBox' label='S3 Key Prefix'
+                             description='Prefix to be applied to the S3 Bucket upload. '/>
+            </property>
+            <property name="checkForExisting">
+                <property-ui type='checkBox' label='Check for Existing Version' default-value="true"
+                             description='Check for an existing version, i.e. already deployed to another environment. If the version exists it will be used instead of uploading a new one.'/>
+            </property>
+            <property name="waitForEnvironment">
+                <property-ui type='checkBox' label='Wait for environment' default-value="true"
+                             description='Wait for the environment to be READY'/>
+            </property>
+            <property name="debugMode" required="false">
+                <property-ui type="checkBox" label="Debug Output" hidden="true"
+                             description="Select this option to display debug output during execution."/>
+            </property>			
+        </properties>
+        <post-processing><![CDATA[
+ if (properties.get("exitCode") != 0) {
+    properties.put(new java.lang.String("Status"), new java.lang.String("Failure"));
+ }
+ else { 
+    properties.put("Status", "Success");
+ }
+ ]]></post-processing>
+        <command program='${GROOVY_HOME}/bin/groovy'>
+            <arg value='-cp'/>
+            <arg path='classes:lib/*'/>
+            <arg file='deploy_into_ebs.groovy'/>
+            <arg file='${PLUGIN_INPUT_PROPS}'/>
+            <arg file='${PLUGIN_OUTPUT_PROPS}'/>
+        </command>
+    </step-type>
+
+    <step-type name='Application Version Exists'>
+        <description>Check whether the specified Application Version already exists.</description>
+        <properties>
+            <property name='accessKeyId' required='true'>
+                <property-ui type='textBox' label='Access Key Id' default-value="${p:system/EC2AccessKeyId}"
+                             description='The EC2 access key id to use to login.'/>
+            </property>
+            <property name='secretKey' required='true'>
+                <property-ui type='textBox' label='Secret Key' default-value="${p:system/EC2SecretKey}"
+                             description='The EC2 Secret Key'/>
+            </property>
+            <property name='region' required='true'>
+                <property-ui description="Select the Elastic Beanstalk region that you want to use" label="Region"
+                             type="selectBox"/>
+                <value label="US East (N. Virginia)">US_EAST_1</value>
+                <value label="US East (Ohio)">US_EAST_2</value>
+                <value label="US West (N. California)">US_WEST_1</value>
+                <value label="US West (Oregon)">US_WEST_2</value>
+                <value label="Canada (Central)">CA_CENTRAL_1</value>
+                <value label="Asia Pacific (Mumbai)">AP_SOUTH_1</value>
+                <value label="Asia Pacific (Tokyo)">AP_NORTHEAST_1</value>
+                <value label="Asia Pacific (Seoul)">AP_NORTHEAST_2</value>
+                <value label="Asia Pacific (Osaka-Local)">AP_NORTHEAST_3</value>
+                <value label="Asia Pacific (Singapore)">AP_SOUTHEAST_1</value>
+                <value label="Asia Pacific (Sydney)">AP_SOUTHEAST_2</value>
+                <value label="China (Beijing)">CN_NORTH_1</value>
+                <value label="China (Ningxia)">CN_NORTHWEST_1</value>
+                <value label="EU (Frankfurt)">EU_CENTRAL_1</value>
+                <value label="EU (Ireland)">EU_WEST_1</value>
+                <value label="EU (London)">EU_WEST_2</value>
+                <value label="EU (Paris)">EU_WEST_3</value>
+                <value label="South America (São Paulo)">SA_EAST_1</value>
+                <value label="AWS GovCloud (US)">GovCloud</value>
+            </property>
+            <property name='appName' required='true'>
+                <property-ui type='textBox' label='Application Name' default-value="${p:application.name}"
+                             description='Beanstalk Application Name'/>
+            </property>
+            <property name='versionLabel' required="true">
+                <property-ui type='textBox' label='Application Version Name' default-value="${p:version.name}"
+                             description='The name of the application version to be checked. '/>
+            </property>
+            <property name="debugMode" required="false">
+                <property-ui type="checkBox" label="Debug Output" hidden="true"
+                             description="Select this option to display debug output during execution."/>
+            </property>			
+        </properties>
+        <post-processing><![CDATA[
+ if (properties.get("exitCode") != 0) {
+    properties.put(new java.lang.String("Status"), new java.lang.String("Failure"));
+ }
+ else {
+    properties.put("Status", "Success");
+ }
+ ]]></post-processing>
+        <command program='${GROOVY_HOME}/bin/groovy'>
+            <arg value='-cp'/>
+            <arg path='classes:lib/*'/>
+            <arg file='application_version_exists.groovy'/>
+            <arg file='${PLUGIN_INPUT_PROPS}'/>
+            <arg file='${PLUGIN_OUTPUT_PROPS}'/>
+        </command>
+    </step-type>
+
+    <step-type name='Wait for Environment'>
+        <description>Wait for an Elastic Beanstalk environment to transition to the specified Health and Status.
+        </description>
+        <properties>
+            <property name='accessKeyId' required='true'>
+                <property-ui type='textBox' label='Access Key Id' default-value="${p:system/EC2AccessKeyId}"
+                             description='The EC2 access key id to use to login.'/>
+            </property>
+            <property name='secretKey' required='true'>
+                <property-ui type='textBox' label='Secret Key' default-value="${p:system/EC2SecretKey}"
+                             description='The EC2 Secret Key'/>
+            </property>
+            <property name='region' required='true'>
+                <property-ui description="Select the Elastic Beanstalk region that you want to use" label="Region"
+                             type="selectBox"/>
+                <value label="US East (N. Virginia)">US_EAST_1</value>
+                <value label="US East (Ohio)">US_EAST_2</value>
+                <value label="US West (N. California)">US_WEST_1</value>
+                <value label="US West (Oregon)">US_WEST_2</value>
+                <value label="Canada (Central)">CA_CENTRAL_1</value>
+                <value label="Asia Pacific (Mumbai)">AP_SOUTH_1</value>
+                <value label="Asia Pacific (Tokyo)">AP_NORTHEAST_1</value>
+                <value label="Asia Pacific (Seoul)">AP_NORTHEAST_2</value>
+                <value label="Asia Pacific (Osaka-Local)">AP_NORTHEAST_3</value>
+                <value label="Asia Pacific (Singapore)">AP_SOUTHEAST_1</value>
+                <value label="Asia Pacific (Sydney)">AP_SOUTHEAST_2</value>
+                <value label="China (Beijing)">CN_NORTH_1</value>
+                <value label="China (Ningxia)">CN_NORTHWEST_1</value>
+                <value label="EU (Frankfurt)">EU_CENTRAL_1</value>
+                <value label="EU (Ireland)">EU_WEST_1</value>
+                <value label="EU (London)">EU_WEST_2</value>
+                <value label="EU (Paris)">EU_WEST_3</value>
+                <value label="South America (São Paulo)">SA_EAST_1</value>
+                <value label="AWS GovCloud (US)">GovCloud</value>
+            </property>
+            <property name='appName' required='true'>
+                <property-ui type='textBox' label='Application Name' default-value="${p:application.name}"
+                             description='Beanstalk Application Name'/>
+            </property>
+            <property name='envName' required='true'>
+                <property-ui type='textBox' label='Environment Name' default-value="${p:environment.name}"
+                             description='Beanstalk Environment Name'/>
+            </property>
+            <property name='envStatus' required="true">
+                <property-ui type='textBox' label='Environment Status' default-value="Ready"
+                             description='The status of the environment. '/>
+            </property>
+            <property name='envHealth' required="true">
+                <property-ui type='textBox' label='Environment Health' default-value="Green"
+                             description='The health of the environment. '/>
+            </property>
+            <property name="debugMode" required="false">
+                <property-ui type="checkBox" label="Debug Output" hidden="true"
+                             description="Select this option to display debug output during execution."/>
+            </property>			
+        </properties>
+        <post-processing><![CDATA[
+ if (properties.get("exitCode") != 0) {
+    properties.put(new java.lang.String("Status"), new java.lang.String("Failure"));
+ }
+ else {
+    properties.put("Status", "Success");
+ }
+ ]]></post-processing>
+        <command program='${GROOVY_HOME}/bin/groovy'>
+            <arg value='-cp'/>
+            <arg path='classes:lib/*'/>
+            <arg file='wait_for_environment.groovy'/>
+            <arg file='${PLUGIN_INPUT_PROPS}'/>
+            <arg file='${PLUGIN_OUTPUT_PROPS}'/>
+        </command>
+    </step-type>
+
+    <step-type name='Environment Health and Status'>
+        <description>Get the Health and Status of an Elastic Beanstalk environment and set the properties \"envHealth\"
+            and \"envStatus\" accordingly.
+        </description>
+        <properties>
+            <property name='accessKeyId' required='true'>
+                <property-ui type='textBox' label='Access Key Id' default-value="${p:system/EC2AccessKeyId}"
+                             description='The EC2 access key id to use to login.'/>
+            </property>
+            <property name='secretKey' required='true'>
+                <property-ui type='textBox' label='Secret Key' default-value="${p:system/EC2SecretKey}"
+                             description='The EC2 Secret Key'/>
+            </property>
+            <property name='region' required='true'>
+                <property-ui description="Select the Elastic Beanstalk region that you want to use" label="Region"
+                             type="selectBox"/>
+                <value label="US East (N. Virginia)">US_EAST_1</value>
+                <value label="US East (Ohio)">US_EAST_2</value>
+                <value label="US West (N. California)">US_WEST_1</value>
+                <value label="US West (Oregon)">US_WEST_2</value>
+                <value label="Canada (Central)">CA_CENTRAL_1</value>
+                <value label="Asia Pacific (Mumbai)">AP_SOUTH_1</value>
+                <value label="Asia Pacific (Tokyo)">AP_NORTHEAST_1</value>
+                <value label="Asia Pacific (Seoul)">AP_NORTHEAST_2</value>
+                <value label="Asia Pacific (Osaka-Local)">AP_NORTHEAST_3</value>
+                <value label="Asia Pacific (Singapore)">AP_SOUTHEAST_1</value>
+                <value label="Asia Pacific (Sydney)">AP_SOUTHEAST_2</value>
+                <value label="China (Beijing)">CN_NORTH_1</value>
+                <value label="China (Ningxia)">CN_NORTHWEST_1</value>
+                <value label="EU (Frankfurt)">EU_CENTRAL_1</value>
+                <value label="EU (Ireland)">EU_WEST_1</value>
+                <value label="EU (London)">EU_WEST_2</value>
+                <value label="EU (Paris)">EU_WEST_3</value>
+                <value label="South America (São Paulo)">SA_EAST_1</value>
+                <value label="AWS GovCloud (US)">GovCloud</value>
+            </property>
+            <property name='appName' required='true'>
+                <property-ui type='textBox' label='Application Name' default-value="${p:application.name}"
+                             description='Beanstalk Application Name'/>
+            </property>
+            <property name='envName' required='true'>
+                <property-ui type='textBox' label='Environment Name' default-value="${p:environment.name}"
+                             description='Beanstalk Environment Name'/>
+            </property>
+            <property name="debugMode" required="false">
+                <property-ui type="checkBox" label="Debug Output" hidden="true"
+                             description="Select this option to display debug output during execution."/>
+            </property>			
+        </properties>
+        <post-processing><![CDATA[
+ if (properties.get("exitCode") != 0) {
+    properties.put(new java.lang.String("Status"), new java.lang.String("Failure"));
+ }
+ else {
+    properties.put("Status", "Success");
+ }
+ ]]></post-processing>
+        <command program='${GROOVY_HOME}/bin/groovy'>
+            <arg value='-cp'/>
+            <arg path='classes:lib/*'/>
+            <arg file='environment_health_and_status.groovy'/>
+            <arg file='${PLUGIN_INPUT_PROPS}'/>
+            <arg file='${PLUGIN_OUTPUT_PROPS}'/>
+        </command>
+    </step-type>
+
+</plugin>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pluginInfo>
+    <author>
+        <name>Micro Focus</name>
+        <email></email>
+        <website>http://microfocus.com</website>
+    </author>
+    <licenses>
+        <license></license>
+    </licenses>
+    <integrationType>Automation</integrationType>
+    <categories>
+        <category>cloud</category>
+        <category>Amazon</category>
+    </categories>
+    <versions>
+        <version name="1">
+            <releaseNote>
+                This plugin provides steps for deploying an application into Amazon Elastic Beanstalk.
+            </releaseNote>
+        </version>
+    </versions>
+</pluginInfo>
