@@ -245,7 +245,6 @@ class BeanstalkHelper {
 
         int count = 0
         while (true) {
-            Thread.sleep(DELAY_INTERVAL)
             if (count++ > MAX_TRIES) {
                 throw new RuntimeException("Environment \"" + envName + "\" never transitioned to Ready")
             }
@@ -268,6 +267,7 @@ class BeanstalkHelper {
                     return
                 }
             }
+            Thread.sleep(DELAY_INTERVAL)
         }
     }
 
