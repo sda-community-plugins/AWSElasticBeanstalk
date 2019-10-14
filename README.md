@@ -1,6 +1,6 @@
 # AWS Elastic Beanstalk plugin
 
-The _AWS Elastic Benstalk_ plugin is a Cloud Deployment plugin. It is run during the development and deployment process 
+The _AWS Elastic Beanstalk_ plugin is a Cloud Deployment plugin. It is run during the development and deployment process 
 to manage and deploy web applications into [AWS Elastic Beanstalk](https://aws.amazon.com/elasticbeanstalk/). It interacts 
 directly with the Elastic Beanstalk SDK.
 
