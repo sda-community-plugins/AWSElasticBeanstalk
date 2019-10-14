@@ -3,7 +3,7 @@
     <header>
         <identifier id='com.urbancode.air.plugin.AWSElasticBeanstalk' version='1' name='AWSElasticBeanstalk'/>
         <description>
-			This plugin provides steps for deploying an application into AWS Elastic Beanstalk.
+            This plugin provides steps for deploying an application into AWS Elastic Beanstalk.
         </description>
         <tag>Cloud/AWS Elastic Beanstalk</tag>
     </header>
@@ -48,7 +48,7 @@
                 <property-ui type='textBox' label='Application Name' default-value="${p:application.name}"
                              description='Beanstalk Application Name'/>
             </property>
-			<property name="debugMode" required="false">
+            <property name="debugMode" required="false">
                 <property-ui type="checkBox" label="Debug Output" hidden="true"
                              description="Select this option to display debug output during execution."/>
             </property>
@@ -111,7 +111,7 @@
             <property name="debugMode" required="false">
                 <property-ui type="checkBox" label="Debug Output" hidden="true"
                              description="Select this option to display debug output during execution."/>
-            </property>			
+            </property>
         </properties>
         <post-processing><![CDATA[
  if (properties.get("exitCode") != 0) {
@@ -178,7 +178,7 @@
                 <property-ui default-value="Name" description="Column name to be used for selection" hidden="true"
                              label="Key column Name for Selection" type="textBox"/>
             </property>
-			<property name="debugMode" required="false">
+            <property name="debugMode" required="false">
                 <property-ui type="checkBox" label="Debug Output" hidden="true"
                              description="Select this option to display debug output during execution."/>
             </property>
@@ -245,7 +245,7 @@
             <property name="debugMode" required="false">
                 <property-ui type="checkBox" label="Debug Output" hidden="true"
                              description="Select this option to display debug output during execution."/>
-            </property>			
+            </property>
         </properties>
         <post-processing><![CDATA[
  if (properties.get("exitCode") != 0) {
@@ -323,7 +323,7 @@
             <property name="debugMode" required="false">
                 <property-ui type="checkBox" label="Debug Output" hidden="true"
                              description="Select this option to display debug output during execution."/>
-            </property>			
+            </property>
         </properties>
         <post-processing><![CDATA[
  if (properties.get("exitCode") != 0) {
@@ -415,7 +415,7 @@
             <property name="debugMode" required="false">
                 <property-ui type="checkBox" label="Debug Output" hidden="true"
                              description="Select this option to display debug output during execution."/>
-            </property>			
+            </property>
         </properties>
         <post-processing><![CDATA[
  if (properties.get("exitCode") != 0) {
@@ -479,7 +479,7 @@
             <property name="debugMode" required="false">
                 <property-ui type="checkBox" label="Debug Output" hidden="true"
                              description="Select this option to display debug output during execution."/>
-            </property>			
+            </property>
         </properties>
         <post-processing><![CDATA[
  if (properties.get("exitCode") != 0) {
@@ -552,7 +552,7 @@
             <property name="debugMode" required="false">
                 <property-ui type="checkBox" label="Debug Output" hidden="true"
                              description="Select this option to display debug output during execution."/>
-            </property>			
+            </property>
         </properties>
         <post-processing><![CDATA[
  if (properties.get("exitCode") != 0) {
@@ -618,7 +618,7 @@
             <property name="debugMode" required="false">
                 <property-ui type="checkBox" label="Debug Output" hidden="true"
                              description="Select this option to display debug output during execution."/>
-            </property>			
+            </property>
         </properties>
         <post-processing><![CDATA[
  if (properties.get("exitCode") != 0) {
