@@ -141,7 +141,8 @@
           -->
 
         <release-note plugin-version="1">
-            This plugin provides steps for deploying an application into Amazon Elastic Beanstalk.
+            This plugin provides steps for deploying applications into AWS Elastic Beanstalk and managing
+            AWS Elastic Beanstalk applications and environments.
         </release-note>
     </release-notes>
 </pluginInfo>

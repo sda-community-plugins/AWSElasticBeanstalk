@@ -12,7 +12,7 @@ import com.amazonaws.services.elasticbeanstalk.model.UpdateEnvironmentRequest
 
 String accessKeyId = ""
 String secretKey = ""
-String region = "EU_WEST_1"
+String region = "EU_WEST_2"
 String s3BucketName = "elasticbeanstalk-eu-west-1-941683627343"
 String s3KeyPrefix = "upload/"
 String s3VersionLabel = "1.0.4"
@@ -21,7 +21,14 @@ String appName = "TestApp"
 def envName = "Testapp-env"
 
 BeanstalkHelper helper = new BeanstalkHelper(accessKeyId, secretKey, region)
-
+List<EnvironmentDescription> environments = helper.getAWSBeanstalkClient().describeEnvironments(
+        new DescribeEnvironmentsRequest()
+).getEnvironments()
+println environments
+println helper.applicationEnvironmentExists("java-web-app", "Test")
+println helper.applicationEnvironmentExists("e-9mtqvxvdwa")
+helper.restartAppServer("e-9mtqvxvdwa")
+System.exit(0)
 /*
 def solutionStacks =  helper.listSolutionStacks()
 

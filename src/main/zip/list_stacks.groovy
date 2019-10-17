@@ -36,9 +36,11 @@ final def  props  = new StepPropertiesHelper(apTool.getStepProperties(), true)
 File workDir = new File('.').canonicalFile
 String accessKeyId = props.notNull('accessKeyId')
 String secretKey = props.notNull('secretKey')
-String region = props.notNull('region')
+String region = props.optional('region')
+String defaultRegion = props.optional("defaultRegion")
 String stackFilter = props.optional('stackFilter')
 Boolean debugMode = props.optionalBoolean("debugMode", false)
+String ec2Region = (defaultRegion.isEmpty() ? region : defaultRegion)
 
 println "----------------------------------------"
 println "-- STEP INPUTS"
@@ -67,7 +69,7 @@ int exitCode = -1;
 //
 try {
 
-    BeanstalkHelper helper = new BeanstalkHelper(accessKeyId, secretKey, region)
+    BeanstalkHelper helper = new BeanstalkHelper(accessKeyId, secretKey, ec2Region)
     helper.log("Using region \"${helper.getAWSRegion().getName()}\"")
 
     List<String> solutionStacks = helper.listSolutionStacks()
@@ -83,7 +85,9 @@ try {
         Properties p = new Properties();
         String stackName = solutionStacks.get(i)
         if (stackName.toLowerCase().contains(stackFilter.toLowerCase())) {
-            helper.log("Found solution stack: ${stackName}")
+            if (debugMode) {
+                helper.log("Found solution stack: ${stackName}")
+            }
             p.put("Name", stackName)
             stackList.add(p)
         } else {

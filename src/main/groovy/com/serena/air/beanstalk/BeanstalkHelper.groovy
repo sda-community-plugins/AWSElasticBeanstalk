@@ -1,28 +1,15 @@
 package com.serena.air.beanstalk
 
-//sdk imports
 import com.amazonaws.auth.AWSCredentials
 import com.amazonaws.auth.BasicAWSCredentials
 import com.amazonaws.regions.Region
 import com.amazonaws.regions.Regions
+
+//sdk imports
+
 import com.amazonaws.services.elasticbeanstalk.AWSElasticBeanstalk
 import com.amazonaws.services.elasticbeanstalk.AWSElasticBeanstalkClient
-import com.amazonaws.services.elasticbeanstalk.model.ApplicationDescription
-import com.amazonaws.services.elasticbeanstalk.model.ApplicationVersionDescription
-import com.amazonaws.services.elasticbeanstalk.model.ConfigurationOptionSetting
-import com.amazonaws.services.elasticbeanstalk.model.OptionSpecification
-import com.amazonaws.services.elasticbeanstalk.model.CreateApplicationRequest
-import com.amazonaws.services.elasticbeanstalk.model.CreateApplicationVersionRequest
-import com.amazonaws.services.elasticbeanstalk.model.CreateEnvironmentRequest
-import com.amazonaws.services.elasticbeanstalk.model.DescribeApplicationVersionsRequest
-import com.amazonaws.services.elasticbeanstalk.model.DescribeApplicationsRequest
-import com.amazonaws.services.elasticbeanstalk.model.DescribeEnvironmentsRequest
-import com.amazonaws.services.elasticbeanstalk.model.EnvironmentDescription
-import com.amazonaws.services.elasticbeanstalk.model.ListAvailableSolutionStacksRequest
-import com.amazonaws.services.elasticbeanstalk.model.ListAvailableSolutionStacksResult
-import com.amazonaws.services.elasticbeanstalk.model.S3Location
-import com.amazonaws.services.elasticbeanstalk.model.SolutionStackDescription
-import com.amazonaws.services.elasticbeanstalk.model.UpdateEnvironmentRequest
+import com.amazonaws.services.elasticbeanstalk.model.*
 import com.amazonaws.services.s3.AmazonS3Client
 import com.amazonaws.services.s3.model.PutObjectRequest
 
@@ -50,9 +37,11 @@ class BeanstalkHelper {
         s3Client.setRegion(awsRegion)
     }
 
-    def AWSCredentials getAWSCredentials() { return awsCredentials }
-    def AWSElasticBeanstalk getAWSBeanstalkClient() { return awsBeanstalkClient }
-    def Region getAWSRegion() { return awsRegion }
+    AWSCredentials getAWSCredentials() { return awsCredentials }
+
+    AWSElasticBeanstalk getAWSBeanstalkClient() { return awsBeanstalkClient }
+
+    Region getAWSRegion() { return awsRegion }
 
     def s3GetVersionObject(String s3BucketName, String s3KeyPrefix, String versionLabel, File deployFile) {
         if (!s3Client.doesBucketExistV2(s3BucketName)) {
@@ -69,9 +58,9 @@ class BeanstalkHelper {
         }
         // remove last character if file separator
         s3KeyPrefixLength = s3KeyPrefix.length()
-        char lastChar = s3KeyPrefix.charAt(s3KeyPrefixLength-1)
+        char lastChar = s3KeyPrefix.charAt(s3KeyPrefixLength - 1)
         if (lastChar == '/' || lastChar == '\\') {
-            s3KeyPrefix = s3KeyPrefix.substring(0, s3KeyPrefixLength-1)
+            s3KeyPrefix = s3KeyPrefix.substring(0, s3KeyPrefixLength - 1)
         }
 
         String s3ObjectId
@@ -107,9 +96,9 @@ class BeanstalkHelper {
         }
         // remove last character if file separator
         s3KeyPrefixLength = s3KeyPrefix.length()
-        char lastChar = s3KeyPrefix.charAt(s3KeyPrefixLength-1)
+        char lastChar = s3KeyPrefix.charAt(s3KeyPrefixLength - 1)
         if (lastChar == '/' || lastChar == '\\') {
-            s3KeyPrefix = s3KeyPrefix.substring(0, s3KeyPrefixLength-1)
+            s3KeyPrefix = s3KeyPrefix.substring(0, s3KeyPrefixLength - 1)
         }
 
         String s3ObjectId
@@ -135,7 +124,16 @@ class BeanstalkHelper {
         log("Creating new application \"${appName}\" ...")
         CreateApplicationRequest caRequest = new CreateApplicationRequest(appName)
                 .withDescription("Created by Deployment Automation")
-        getAWSBeanstalkClient().createApplication(caRequest)
+        def application = getAWSBeanstalkClient().createApplication(caRequest)
+        return application.getApplication().getApplicationArn()
+    }
+
+    def deleteApplication(String appName, Boolean terminateEnvByForce) {
+        log("Deleting application \"${appName}\" ...")
+        DeleteApplicationRequest daRequest = new DeleteApplicationRequest()
+                .withApplicationName(appName)
+                .withTerminateEnvByForce(terminateEnvByForce)
+        getAWSBeanstalkClient().deleteApplication(daRequest)
     }
 
     def createApplicationEnvironment(String appName, String envName, String cNAMEPrefix, String stackName,
@@ -148,15 +146,25 @@ class BeanstalkHelper {
         if (configOptions != null) {
             ceRequest.withOptionSettings(configOptions)
         }
-        getAWSBeanstalkClient().createEnvironment(ceRequest)
+        def environment = getAWSBeanstalkClient().createEnvironment(ceRequest)
+        return environment.getEnvironmentId()
+    }
+
+    def terminateApplicationEnvironment(String envName, Boolean terminateResources, Boolean forceTerminate) {
+        log("Terminating environment \"${envName}\" ...")
+        TerminateEnvironmentRequest teRequest = new TerminateEnvironmentRequest()
+                .withEnvironmentName(envName)
+                .withTerminateResources(terminateResources)
+                .withForceTerminate(forceTerminate)
+        getAWSBeanstalkClient().terminateEnvironment(teRequest)
     }
 
     def updateApplicationEnvironment(String appName, String envName, String stackName, HashSet<ConfigurationOptionSetting> addConfigOptions, HashSet<OptionSpecification> removeOptionSpecifications) {
         log("Updating environment \"${envName}\" for application \"${appName}\" ...")
         UpdateEnvironmentRequest ueRequest = new UpdateEnvironmentRequest()
-            .withApplicationName(appName)
-            .withEnvironmentname(envName)
-            .withDescription("Updated by Deployment Automation")
+                .withApplicationName(appName)
+                .withEnvironmentName(envName)
+                .withDescription("Updated by Deployment Automation")
         if (stackName) {
             ueRequest.withSolutionStackName(stackName)
         }
@@ -166,19 +174,40 @@ class BeanstalkHelper {
         if (removeOptionSpecifications) {
             ueRequest.withOptionsToRemove(removeOptionSpecifications)
         }
-        getAWSBeanstalkClient().updateEnvironment(ueRequest)
+        return getAWSBeanstalkClient().updateEnvironment(ueRequest)
     }
 
+    def rebuildApplicationEnvironment(String envName) {
+        log("Rebuilding environment \"${envName}\"  ...")
+        RebuildEnvironmentRequest re = new RebuildEnvironmentRequest()
+                .withEnvironmentName(envName)
+        getAWSBeanstalkClient().rebuildEnvironment(re)
+    }
+
+    def restartAppServer(String envName) {
+        log("Restarting app server for environment \"${envName}\"  ...")
+        RestartAppServerRequest ra = new RestartAppServerRequest()
+                .withEnvironmentName(envName)
+        getAWSBeanstalkClient().restartAppServer(ra)
+    }
+
+    def swapEnvironmentCNAMEs(String sourceEnv, String targetEnv) {
+        log("Swapping URLs for environment \"${sourceEnv}\"  with environment \"${targetEnv} ...")
+        SwapEnvironmentCNAMEsRequest se = new SwapEnvironmentCNAMEsRequest()
+                .withSourceEnvironmentName(sourceEnv)
+                .withDestinationEnvironmentName(targetEnv)
+        getAWSBeanstalkClient().swapEnvironmentCNAMEs(se)
+    }
 
     def listSolutionStacks() {
         log("Listing solution stacks ...")
-        ListAvailableSolutionStacksResult response = getAWSBeanstalkClient().listAvailableSolutionStacks();
+        ListAvailableSolutionStacksResult response = getAWSBeanstalkClient().listAvailableSolutionStacks()
         return response.getSolutionStacks()
     }
 
     def applicationExists(String appName) {
         List<ApplicationDescription> applications = awsBeanstalkClient.describeApplications(
-            new DescribeApplicationsRequest().withApplicationNames(appName)
+                new DescribeApplicationsRequest().withApplicationNames(appName)
         ).getApplications()
         if (applications.size().toInteger() != 0) {
             return true
@@ -189,7 +218,7 @@ class BeanstalkHelper {
 
     def applicationVersionExists(String appName, String versionLabel) {
         List<ApplicationVersionDescription> versions = awsBeanstalkClient.describeApplicationVersions(
-            new DescribeApplicationVersionsRequest().withApplicationName(appName).withVersionLabels(versionLabel)
+                new DescribeApplicationVersionsRequest().withApplicationName(appName).withVersionLabels(versionLabel)
         ).getApplicationVersions()
         if (versions.size().toInteger() != 0) {
             return true
@@ -198,9 +227,21 @@ class BeanstalkHelper {
         }
     }
 
+
     def applicationEnvironmentExists(String appName, String envName) {
         List<EnvironmentDescription> environments = awsBeanstalkClient.describeEnvironments(
                 new DescribeEnvironmentsRequest().withApplicationName(appName).withEnvironmentNames(envName)
+        ).getEnvironments()
+        if (environments.size().toInteger() != 0) {
+            return true
+        } else {
+            return false
+        }
+    }
+
+    def applicationEnvironmentExists(String envName) {
+        List<EnvironmentDescription> environments = awsBeanstalkClient.describeEnvironments(
+                new DescribeEnvironmentsRequest().withEnvironmentNames(envName)
         ).getEnvironments()
         if (environments.size().toInteger() != 0) {
             return true
@@ -215,7 +256,13 @@ class BeanstalkHelper {
                 .withAutoCreateApplication(false)
                 .withSourceBundle(new S3Location(s3BucketName, s3ObjectId))
                 .withDescription("Uploaded by Deployment Automation")
-        getAWSBeanstalkClient().createApplicationVersion(cavRequest)
+        return getAWSBeanstalkClient().createApplicationVersion(cavRequest)
+    }
+
+    def deleteApplicationVersion(String appName, String versionLabel) {
+        log("Updating application version \"${versionLabel}\" for application \"${appName}\" ...")
+        DeleteApplicationVersionRequest davRequest = new DeleteApplicationVersionRequest(appName, versionLabel)
+        return getAWSBeanstalkClient().deleteApplicationVersion(davRequest)
     }
 
     def updateEnvironmentWithVersion(String appName, String envName, String versionLabel) {
@@ -225,18 +272,18 @@ class BeanstalkHelper {
                 .withEnvironmentName(envName)
                 .withVersionLabel(versionLabel)
                 .withDescription("Deployed by Deployment Automation")
-        getAWSBeanstalkClient().updateEnvironment(ueRequest)
+        return getAWSBeanstalkClient().updateEnvironment(ueRequest)
     }
 
     def getEnvironmentStatusAndHealth(String envName) {
-            List<EnvironmentDescription> environments = awsBeanstalkClient.describeEnvironments(
+        List<EnvironmentDescription> environments = awsBeanstalkClient.describeEnvironments(
                 new DescribeEnvironmentsRequest().withEnvironmentNames(envName)
-            ).getEnvironments()
-            if (environments.size().toInteger() == 0) {
-                throw new RuntimeException("No environments with the name \"${envName}\" found")
-            }
+        ).getEnvironments()
+        if (environments.size().toInteger() == 0) {
+            throw new RuntimeException("No environments with the name \"${envName}\" found")
+        }
 
-            EnvironmentDescription envDesc = environments.get(0)
+        EnvironmentDescription envDesc = environments.get(0)
         return envDesc.getHealth() + "/" + envDesc.getStatus()
     }
 
@@ -250,8 +297,8 @@ class BeanstalkHelper {
             }
 
             List<EnvironmentDescription> environments = awsBeanstalkClient.describeEnvironments(
-                new DescribeEnvironmentsRequest()
-                    .withEnvironmentNames(String.valueOf(envName))
+                    new DescribeEnvironmentsRequest()
+                            .withEnvironmentNames(String.valueOf(envName))
             ).getEnvironments()
 
             if (environments.size().toInteger() == 0) {
@@ -273,7 +320,7 @@ class BeanstalkHelper {
 
     static log(def message) {
         def date = new java.text.SimpleDateFormat("h:mma")
-        def time =  date.format(new Date()).toLowerCase()
+        def time = date.format(new Date()).toLowerCase()
         println "${time}  ${message}"
     }
 

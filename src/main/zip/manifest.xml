@@ -10,13 +10,14 @@
     </licenses>
     <integrationType>Automation</integrationType>
     <categories>
-        <category>cloud</category>
+        <category>Cloud</category>
         <category>Amazon</category>
     </categories>
     <versions>
         <version name="1">
             <releaseNote>
-                This plugin provides steps for deploying an application into Amazon Elastic Beanstalk.
+                This plugin provides steps for deploying applications into AWS Elastic Beanstalk and managing
+                AWS Elastic Beanstalk applications and environments.
             </releaseNote>
         </version>
     </versions>

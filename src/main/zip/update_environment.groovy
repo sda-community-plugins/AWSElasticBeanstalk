@@ -38,13 +38,15 @@ final def  props  = new StepPropertiesHelper(apTool.getStepProperties(), true)
 File workDir = new File('.').canonicalFile
 String accessKeyId = props.notNull('accessKeyId')
 String secretKey = props.notNull('secretKey')
-String region = props.notNull('region')
+String region = props.optional('region')
+String defaultRegion = props.optional("defaultRegion")
 String appName = props.notNull('appName')
 String envName = props.notNull('envName')
 String stackName = props.notNull('stackName')
 String addOptions = props.optional('addConfigOptions')
 String removeOptions = props.optional('removeConfigOptions')
 Boolean debugMode = props.optionalBoolean("debugMode", false)
+String ec2Region = (defaultRegion.isEmpty() ? region : defaultRegion)
 
 println "----------------------------------------"
 println "-- STEP INPUTS"
@@ -57,10 +59,10 @@ println "Working directory: ${workDir.canonicalPath}"
 println "Access Key Id: ${accessKeyId}"
 String printedSecretKey = secretKey.replaceAll("(.*)", "\\*");
 println "Secret Key: ${printedSecretKey}"
-println "Region: ${region}"
-println "Application Name: ${appName}"
-println "Environment Name: ${envName}"
-println "Solution Stack Name: ${stackName}"
+println "Region: ${ec2Region}"
+println "Application: ${appName}"
+println "Environment: ${envName}"
+println "Solution Stack: ${stackName}"
 println "Add Configuration: ${addOptions}"
 println "Remove Configuration: ${removeOptions}"
 println "Debug Output: ${debugMode}"
@@ -77,7 +79,7 @@ int exitCode = -1;
 //
 try {
 
-    BeanstalkHelper helper = new BeanstalkHelper(accessKeyId, secretKey, region)
+    BeanstalkHelper helper = new BeanstalkHelper(accessKeyId, secretKey, ec2Region)
     helper.log("Using region \"${helper.getAWSRegion().getName()}\"")
 
     //
@@ -99,10 +101,14 @@ try {
             if (it && it.indexOf('->') > 0) {
                 def (namespace, optName, optValue) = it.split('->')
                 addConfigurationOptionSettings.add(new ConfigurationOptionSetting(namespace, optName, optValue))
-                println 'Setting option: [' + namespace + '] to ' + optName + ':' + optValue
+                if (debugMode) {
+                    helper.log('Setting option: [' + namespace + '] to ' + optName + ':' + optValue)
+                }
             }
             else if (it) {
-                println "Found invalid option setting $it - missing -> separator"
+                if (debugMode) {
+                    helper.log("Found invalid option setting $it - missing -> separator")
+                }
             }
         }
     }

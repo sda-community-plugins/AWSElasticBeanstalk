@@ -35,12 +35,13 @@ final def  props  = new StepPropertiesHelper(apTool.getStepProperties(), true)
 File workDir = new File('.').canonicalFile
 String accessKeyId = props.notNull('accessKeyId')
 String secretKey = props.notNull('secretKey')
-String region = props.notNull('region')
-String appName = props.notNull('appName')
+String region = props.optional('region')
+String defaultRegion = props.optional("defaultRegion")
 String envName = props.notNull('envName')
 String envHealth = props.notNull('envHealth')
 String envStatus = props.notNull('envStatus')
 Boolean debugMode = props.optionalBoolean("debugMode", false)
+String ec2Region = (defaultRegion.isEmpty() ? region : defaultRegion)
 
 println "----------------------------------------"
 println "-- STEP INPUTS"
@@ -53,9 +54,8 @@ println "Working directory: ${workDir.canonicalPath}"
 println "Access Key Id: ${accessKeyId}"
 String printedSecretKey = secretKey.replaceAll("(.*)", "\\*");
 println "Secret Key: ${printedSecretKey}"
-println "Region: ${region}"
-println "Application Name: ${appName}"
-println "Environment Name: ${envName}"
+println "Region: ${ec2Region}"
+println "Environment: ${envName}"
 println "Environment Health: ${envHealth}"
 println "Environment Status: ${envStatus}"
 println "Debug Output: ${debugMode}"
@@ -72,20 +72,16 @@ int exitCode = -1;
 //
 try {
 
-    BeanstalkHelper helper = new BeanstalkHelper(accessKeyId, secretKey, region)
+    BeanstalkHelper helper = new BeanstalkHelper(accessKeyId, secretKey, ec2Region)
     helper.log("Using region \"${helper.getAWSRegion().getName()}\"")
 
     //
     // validation
     //
 
-    // check application exists
-    if (!helper.applicationExists(appName)) {
-        throw new RuntimeException("Application \"${appName}\" does not exist")
-    }
     // check environment exists
-    if (!helper.applicationEnvironmentExists(appName, envName)) {
-        throw new RuntimeException("Environment \"${envName}\" in application \"${appName}\" does not exist")
+    if (!helper.applicationEnvironmentExists(envName)) {
+        throw new RuntimeException("Environment \"${envName}\" does not exist")
     }
 
     helper.waitForEnvironmentStatusAndHealth(envName, envStatus, envHealth)
@@ -102,8 +98,7 @@ try {
     println("Setting \"envStatus\" output property to \"${envStatus2}\"")
     apTool.setOutputProperty("envHealth", envHealth2)
     println("Setting \"envHealth\" output property to \"${envHealth2}\"")
-
-    apTool.setOutputProperties()
+    apTool.storeOutputProperties()
 
     System.exit 0
 

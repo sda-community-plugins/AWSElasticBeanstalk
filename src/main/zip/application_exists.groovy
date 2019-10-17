@@ -35,9 +35,11 @@ final def  props  = new StepPropertiesHelper(apTool.getStepProperties(), true)
 File workDir = new File('.').canonicalFile
 String accessKeyId = props.notNull('accessKeyId')
 String secretKey = props.notNull('secretKey')
-String region = props.notNull('region')
+String region = props.optional('region')
 String appName = props.notNull('appName')
+String defaultRegion = props.optional("defaultRegion")
 Boolean debugMode = props.optionalBoolean("debugMode", false)
+String ec2Region = (defaultRegion.isEmpty() ? region : defaultRegion)
 
 println "----------------------------------------"
 println "-- STEP INPUTS"
@@ -50,8 +52,8 @@ println "Working directory: ${workDir.canonicalPath}"
 println "Access Key Id: ${accessKeyId}"
 String printedSecretKey = secretKey.replaceAll("(.*)", "\\*");
 println "Secret Key: ${printedSecretKey}"
-println "Region: ${region}"
-println "Application Name: ${appName}"
+println "Region: ${ec2Region}"
+println "Application: ${appName}"
 println "Debug Output: ${debugMode}"
 if (debugMode) { props.setDebugLoggingMode() }
 
@@ -66,7 +68,7 @@ int exitCode = -1;
 //
 try {
 
-    BeanstalkHelper helper = new BeanstalkHelper(accessKeyId, secretKey, region)
+    BeanstalkHelper helper = new BeanstalkHelper(accessKeyId, secretKey, ec2Region)
     helper.log("Using region \"${helper.getAWSRegion().getName()}\"")
 
     // check if application exists

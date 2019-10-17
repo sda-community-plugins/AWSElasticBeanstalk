@@ -2,11 +2,9 @@
 // Deploy an application into Elastic Beanstalk.
 // --------------------------------------------------------------------------------
 
-import com.serena.air.StepFailedException
 import com.serena.air.StepPropertiesHelper
-import com.urbancode.air.AirPluginTool
-
 import com.serena.air.beanstalk.BeanstalkHelper
+import com.urbancode.air.AirPluginTool
 
 //
 // Create some variables that we can use throughout the plugin step.
@@ -24,8 +22,8 @@ final boolean unix = (pathSep == ':' && !vms && !os9)
 //
 // Initialise the plugin tool and retrieve all the properties that were sent to the step.
 //
-final def  apTool = new AirPluginTool(this.args[0], this.args[1])
-final def  props  = new StepPropertiesHelper(apTool.getStepProperties(), true)
+final def apTool = new AirPluginTool(this.args[0], this.args[1])
+final def props = new StepPropertiesHelper(apTool.getStepProperties(), true)
 
 //
 // Set a variable for each of the plugin steps's inputs.
@@ -34,7 +32,8 @@ final def  props  = new StepPropertiesHelper(apTool.getStepProperties(), true)
 //
 String accessKeyId = props.notNull('accessKeyId')
 String secretKey = props.notNull('secretKey')
-String region = props.notNull('region')
+String region = props.optional('region')
+String defaultRegion = props.optional("defaultRegion")
 String appName = props.notNull('appName')
 String envName = props.notNull('envName')
 String s3BucketName = props.optional('s3BucketName')
@@ -42,11 +41,12 @@ String s3KeyPrefix = props.optional('s3KeyPrefix')
 String versionLabel = props.notNull('versionLabel')
 String baseDir = props.notNull('baseDir',)
 String versionFile = props.notNull('versionFile')
-Boolean checkForExisting = props.optionalBoolean('checkForExisting', true)
+Boolean overwriteVersion = props.optionalBoolean('overwriteVersion', false)
 Boolean waitForEnvironment = props.optionalBoolean('waitForEnvironment', true)
 Boolean debugMode = props.optionalBoolean("debugMode", false)
 File workDir = new File(baseDir).canonicalFile
 File deployFile = new File(workDir.canonicalPath + File.separatorChar + versionFile)
+String ec2Region = (defaultRegion.isEmpty() ? region : defaultRegion)
 
 println "----------------------------------------"
 println "-- STEP INPUTS"
@@ -57,26 +57,28 @@ println "----------------------------------------"
 //
 println "Working directory: ${workDir.canonicalPath}"
 println "Access Key Id: ${accessKeyId}"
-String printedSecretKey = secretKey.replaceAll("(.*)", "\\*");
+String printedSecretKey = secretKey.replaceAll("(.*)", "\\*")
 println "Secret Key: ${printedSecretKey}"
-println "Region: ${region}"
-println "Application Name: ${appName}"
-println "Environment Name: ${envName}"
+println "Region: ${ec2Region}"
+println "Application: ${appName}"
+println "Environment: ${envName}"
 println "Application Version: ${versionLabel}"
 println "Base Directory: ${baseDir}"
 println "Version File: ${versionFile}"
-println "S3 bucket Name: ${s3BucketName}"
+println "S3 bucket: ${s3BucketName}"
 println "S3 Key Prefix: ${s3KeyPrefix}"
-println "Check for Existing Version: ${checkForExisting}"
-println "Wait for environment: ${waitForEnvironment}"
+println "Overwrite Version: ${overwriteVersion}"
+println "Wait for Environment: ${waitForEnvironment}"
 println "Debug Output: ${debugMode}"
-if (debugMode) { props.setDebugLoggingMode() }
+if (debugMode) {
+    props.setDebugLoggingMode()
+}
 
 println "----------------------------------------"
 println "-- STEP EXECUTION"
 println "----------------------------------------"
 
-int exitCode = -1;
+int exitCode = -1
 
 //
 // The main body of the plugin step - wrap it in a try/catch statement for handling any exceptions.
@@ -87,7 +89,7 @@ try {
         throw new IllegalArgumentException("Cannot find file: ${deployFile}.")
     }
 
-    BeanstalkHelper helper = new BeanstalkHelper(accessKeyId, secretKey, region)
+    BeanstalkHelper helper = new BeanstalkHelper(accessKeyId, secretKey, ec2Region)
     helper.log("Using region \"${helper.getAWSRegion().getName()}\"")
 
     //
@@ -105,33 +107,31 @@ try {
 
     String s3ObjectId = null
 
-    // should we use existing version (from previous deployment)
-    if (checkForExisting) {
-        // check if version already exists
-        if (helper.applicationVersionExists(appName, versionLabel)) {
-            helper.log("Using existing version \"${versionLabel}\" in application \"${appName}\"")
-            s3ObjectId = helper.s3GetVersionObject(s3BucketName, s3KeyPrefix, versionLabel, deployFile)
-        } else {
-            helper.log("Using existing version selected but \"${versionLabel}\" in application \"${appName}\" does not exist, creating it ...")
-            // upload file into S3 bucket
-            s3ObjectId = helper.s3UploadVersionFile(s3BucketName, s3KeyPrefix, versionLabel, deployFile)
-            // create new application version
-            helper.createApplicationVersion(appName, versionLabel, s3BucketName, s3ObjectId)
-        }
-    } else {
-        // check if version already exists
-        if (helper.applicationVersionExists(appName, versionLabel)) {
-            throw new RuntimeException("Version \"${versionLabel}\" in application \"${appName}\" already exists")
-        }
+    // should we use existing version, overwrite or create a new version
+    def versionExists = helper.applicationVersionExists(appName, versionLabel)
+    if (versionExists) { helper.log("Version \"${versionLabel}\" already exists in application \"${appName}\"")}
+    if (!versionExists) {
+        helper.log("Creating version \"${versionLabel}\" in application \"${appName}\"")
         // upload file into S3 bucket
         s3ObjectId = helper.s3UploadVersionFile(s3BucketName, s3KeyPrefix, versionLabel, deployFile)
         // create new application version
         helper.createApplicationVersion(appName, versionLabel, s3BucketName, s3ObjectId)
+    } else if (overwriteVersion) {
+        // delete existing application version
+        helper.deleteApplicationVersion(appName, versionLabel)
+        helper.log("Overwriting version \"${versionLabel}\" in application \"${appName}\"")
+        // upload file into S3 bucket
+        s3ObjectId = helper.s3UploadVersionFile(s3BucketName, s3KeyPrefix, versionLabel, deployFile)
+        // create new application version
+        helper.createApplicationVersion(appName, versionLabel, s3BucketName, s3ObjectId)
+    } else {
+        helper.log("Using existing version \"${versionLabel}\" in application \"${appName}\"")
+        s3ObjectId = helper.s3GetVersionObject(s3BucketName, s3KeyPrefix, versionLabel, deployFile)
     }
 
     // update environment with application version
     helper.updateEnvironmentWithVersion(appName, envName, versionLabel)
-    
+
     // wait for deployment to complete
     if (waitForEnvironment) {
         helper.waitForEnvironmentStatusAndHealth(envName, "Ready", null)
@@ -151,10 +151,9 @@ try {
     println("Setting \"envStatus\" output property to \"${envStatus}\"")
     apTool.setOutputProperty("envHealth", envHealth)
     println("Setting \"envHealth\" output property to \"${envHealth}\"")
+    apTool.storeOutputProperties()
 
-    apTool.setOutputProperties()
-
-    exitCode = 0;
+    exitCode = 0
 
 } catch (all) {
     println "ERROR: " + all.getMessage()
@@ -164,4 +163,4 @@ try {
 //
 // An exit with a zero value means the plugin step execution will be deemed successful.
 //
-System.exit(exitCode);
+System.exit(exitCode)

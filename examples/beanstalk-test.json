@@ -24,74 +24,109 @@
     "propDefs": [
         {
             "name": "app.name",
-            "label": "Application Name",
-            "extendedLabel": "Application Name",
+            "label": "Beanstalk Application Name",
+            "extendedLabel": "Beanstalk Application Name",
             "type": "TEXT",
-            "value": "java-web-app",
-            "required": false,
-            "description": "The Application Name",
+            "value": "Java Web App",
+            "required": true,
+            "description": "The name of the beanstalk application",
             "hidden": false
         },
         {
             "name": "env.name",
-            "label": "Environment Name",
-            "extendedLabel": "Environment Name",
+            "label": "Beanstalk Environment Name",
+            "extendedLabel": "Beanstalk Environment Name",
             "type": "TEXT",
-            "value": "Test",
             "required": false,
-            "description": "The Environment Name",
+            "description": "The name of the beanstalk environment - leave blank it will be set and picked up from properties in the process",
             "hidden": false
         },
         {
             "name": "s3.bucket",
-            "label": "S3 Bucket",
-            "extendedLabel": "S3 Bucket",
+            "label": "S3 Bucket Name",
+            "extendedLabel": "S3 Bucket Name",
             "type": "TEXT",
             "value": "elasticbeanstalk-eu-west-2-093005091287",
-            "required": false,
-            "description": "The S3 Bucket",
+            "required": true,
+            "description": "The name of the S3 Bucket to upload files into",
             "hidden": false
         },
         {
-            "name": "domain.name",
-            "label": "Domain",
-            "extendedLabel": "Domain",
-            "type": "TEXT",
-            "value": "jwa-test",
+            "name": "env.opts",
+            "label": "Beanstalk Environment Options",
+            "extendedLabel": "Beanstalk Environment Options",
+            "type": "TEXTAREA",
+            "value": "aws:ec2:vpc->VPCId->vpc-0e4cbe1c67f454f92\naws:ec2:vpc->Subnets->subnet-06bc440ace5fd25fb",
             "required": false,
-            "description": "",
+            "description": "Any additional configuration options to pass when creating the beanstalk environment, e.g. aws:ec2:vpc->VPCId->vpc-0e4cbe1c67f454f92",
+            "hidden": false
+        },
+        {
+            "name": "app.version",
+            "label": "Beanstalk App Version",
+            "extendedLabel": "Beanstalk App Version",
+            "type": "TEXT",
+            "value": "1.0",
+            "required": true,
+            "description": "The version of the application to create in beanstalk",
+            "hidden": false
+        },
+        {
+            "name": "file.baseDir",
+            "label": "Deploy File Directory",
+            "extendedLabel": "Deploy File Directory",
+            "type": "TEXT",
+            "value": "C:\\Temp\\java-web-app\\target",
+            "required": true,
+            "description": "The base directory containing the file, e.g. WAR file to deploy",
+            "hidden": false
+        },
+        {
+            "name": "file.name",
+            "label": "Deploy FIlename",
+            "extendedLabel": "Deploy FIlename",
+            "type": "TEXT",
+            "value": "java-web-app.war",
+            "required": true,
+            "description": "The filename of the file to deploy",
+            "hidden": false
+        },
+        {
+            "name": "s3.prefix",
+            "label": "S3 Prefix",
+            "extendedLabel": "S3 Prefix",
+            "type": "TEXT",
+            "value": "JWA",
+            "required": true,
+            "description": "The S3 prefix (sub-directory) to use when uploading the file into S3 storage",
+            "hidden": false
+        },
+        {
+            "name": "delete.app",
+            "label": "Delete Beanstalk App",
+            "extendedLabel": "Delete Beanstalk App",
+            "type": "CHECKBOX",
+            "value": "false",
+            "required": false,
+            "description": "Delete the beanstalk application at the end of the process.",
+            "hidden": false
+        },
+        {
+            "name": "new.env",
+            "label": "Create New Environment",
+            "extendedLabel": "Create New Environment",
+            "type": "CHECKBOX",
+            "value": "false",
+            "required": false,
+            "description": "Check to create a new environment on each execution or reuse the existing one. Always check on first run.",
             "hidden": false
         }
     ],
     "rootActivity": {
         "edges": [
             {
-                "to": "List Stacks",
-                "from": "Environment Exists",
-                "type": "FAILURE",
-                "value": ""
-            },
-            {
-                "to": "Wait for Environment",
-                "from": "Environment Exists",
-                "type": "SUCCESS",
-                "value": ""
-            },
-            {
-                "to": "Wait for Environment",
-                "from": "Create Environment",
-                "type": "ALWAYS",
-                "value": ""
-            },
-            {
-                "to": "Create Environment",
-                "from": "List Stacks",
-                "type": "SUCCESS",
-                "value": ""
-            },
-            {
-                "to": "Deploy into Elastic Beanstalk",
-                "from": "Wait for Environment",
+                "to": "Environment Exists",
+                "from": "Application Exists",
                 "type": "SUCCESS",
                 "value": ""
             },
@@ -102,20 +137,27 @@
                 "value": ""
             },
             {
-                "to": "Environment Exists",
-                "from": "Application Exists",
+                "to": "Application Exists",
+                "from": "Set Property",
                 "type": "SUCCESS",
                 "value": ""
             },
             {
                 "to": "10ad-3dc6-3801-ce62",
-                "from": "Deploy into Elastic Beanstalk",
-                "type": "SUCCESS",
+                "from": "Delete App?",
+                "type": "VALUE",
                 "value": ""
             },
             {
-                "to": "Application Exists",
-                "type": "ALWAYS",
+                "to": "Delete Application",
+                "from": "Delete App?",
+                "type": "VALUE",
+                "value": "true"
+            },
+            {
+                "to": "Set Property",
+                "from": "Get Resource Property",
+                "type": "SUCCESS",
                 "value": ""
             },
             {
@@ -123,63 +165,225 @@
                 "from": "Create Application",
                 "type": "ALWAYS",
                 "value": ""
+            },
+            {
+                "to": "Generate Unique Environment Name",
+                "from": "Create New Env?",
+                "type": "VALUE",
+                "value": "true"
+            },
+            {
+                "to": "Application Exists",
+                "from": "Set Property (First Run)",
+                "type": "ALWAYS",
+                "value": ""
+            },
+            {
+                "to": "Generate Unique Environment Name",
+                "from": "Environment Exists",
+                "type": "FAILURE",
+                "value": ""
+            },
+            {
+                "to": "List Stacks",
+                "from": "Set Property (Updated)",
+                "type": "SUCCESS",
+                "value": ""
+            },
+            {
+                "to": "Deploy into Elastic Beanstalk",
+                "from": "Wait for Environment",
+                "type": "SUCCESS",
+                "value": ""
+            },
+            {
+                "to": "Set Resource Property",
+                "from": "Generate Unique Environment Name",
+                "type": "SUCCESS",
+                "value": ""
+            },
+            {
+                "to": "Wait for Environment",
+                "from": "Create Environment",
+                "type": "ALWAYS",
+                "value": ""
+            },
+            {
+                "to": "Restart Environment Application Servers",
+                "from": "Deploy into Elastic Beanstalk",
+                "type": "SUCCESS",
+                "value": ""
+            },
+            {
+                "to": "Wait for Environment",
+                "from": "Create New Env?",
+                "type": "VALUE",
+                "value": ""
+            },
+            {
+                "to": "Wait for Environment Again",
+                "from": "Restart Environment Application Servers",
+                "type": "SUCCESS",
+                "value": ""
+            },
+            {
+                "to": "Set Property (First Run)",
+                "from": "Get Resource Property",
+                "type": "FAILURE",
+                "value": ""
+            },
+            {
+                "to": "Terminate Environment",
+                "from": "Wait for Environment Again",
+                "type": "SUCCESS",
+                "value": ""
+            },
+            {
+                "to": "Get Resource Property",
+                "type": "ALWAYS",
+                "value": ""
+            },
+            {
+                "to": "Create New Env?",
+                "from": "Environment Exists",
+                "type": "SUCCESS",
+                "value": ""
+            },
+            {
+                "to": "Set Property (Updated)",
+                "from": "Set Resource Property",
+                "type": "SUCCESS",
+                "value": ""
+            },
+            {
+                "to": "Delete App?",
+                "from": "Terminate Environment",
+                "type": "SUCCESS",
+                "value": ""
+            },
+            {
+                "to": "10ad-3dc6-3801-ce62",
+                "from": "Delete Application",
+                "type": "SUCCESS",
+                "value": ""
+            },
+            {
+                "to": "Create Environment",
+                "from": "List Stacks",
+                "type": "SUCCESS",
+                "value": ""
             }
         ],
         "offsets": [
             {
-                "name": "Deploy into Elastic Beanstalk",
-                "x": -107.5,
-                "y": 680
+                "name": "Environment Exists",
+                "x": -71.5,
+                "y": 535
             },
             {
-                "name": "10ad-3dc6-3801-ce62",
-                "x": -8.5,
-                "y": 800
-            },
-            {
-                "name": "Create Environment",
-                "x": 131,
-                "y": 460
-            },
-            {
-                "name": "Application Exists",
-                "x": -79,
-                "y": 100
+                "name": "Restart Environment Application Servers",
+                "x": -129,
+                "y": 1266
             },
             {
                 "name": "List Stacks",
-                "x": 131,
-                "y": 370
-            },
-            {
-                "name": "Wait for Environment",
-                "x": -90.5,
-                "y": 570
+                "x": 210.5,
+                "y": 946
             },
             {
                 "name": "Create Application",
-                "x": 131,
-                "y": 190
+                "x": 68.5,
+                "y": 446
             },
             {
-                "name": "Environment Exists",
+                "name": "Wait for Environment Again",
+                "x": -94,
+                "y": 1336
+            },
+            {
+                "name": "Deploy into Elastic Beanstalk",
+                "x": -91.5,
+                "y": 1186
+            },
+            {
+                "name": "Application Exists",
+                "x": -66.5,
+                "y": 350
+            },
+            {
+                "name": "Terminate Environment",
+                "x": -81.5,
+                "y": 1426
+            },
+            {
+                "name": "Delete App?",
                 "x": -79,
-                "y": 280
+                "y": 1506
+            },
+            {
+                "name": "Set Property",
+                "x": -323.5,
+                "y": 228
+            },
+            {
+                "name": "Set Property (Updated)",
+                "x": 191,
+                "y": 866
+            },
+            {
+                "name": "Set Property (First Run)",
+                "x": -86.5,
+                "y": 236
+            },
+            {
+                "name": "Wait for Environment",
+                "x": -66.5,
+                "y": 1096
+            },
+            {
+                "name": "Set Resource Property",
+                "x": 189.5,
+                "y": 776
+            },
+            {
+                "name": "Delete Application",
+                "x": 175.5,
+                "y": 1586
+            },
+            {
+                "name": "Create Environment",
+                "x": 199.5,
+                "y": 1036
+            },
+            {
+                "name": "Generate Unique Environment Name",
+                "x": 149.5,
+                "y": 706
+            },
+            {
+                "name": "Get Resource Property",
+                "x": -81.5,
+                "y": 136
+            },
+            {
+                "name": "10ad-3dc6-3801-ce62",
+                "x": 2.5,
+                "y": 1686
+            },
+            {
+                "name": "Create New Env?",
+                "x": -91.5,
+                "y": 626
             }
         ],
         "sizes": [
             {
-                "name": "Wait for Environment",
+                "name": "Set Resource Property",
                 "width": 0,
                 "height": 0
             },
             {
-                "name": "Environment Exists",
-                "width": 0,
-                "height": 0
-            },
-            {
-                "name": "Deploy into Elastic Beanstalk",
+                "name": "Terminate Environment",
                 "width": 0,
                 "height": 0
             },
@@ -189,12 +393,7 @@
                 "height": 0
             },
             {
-                "name": "Create Environment",
-                "width": 0,
-                "height": 0
-            },
-            {
-                "name": "Application Exists",
+                "name": "Get Resource Property",
                 "width": 0,
                 "height": 0
             },
@@ -204,13 +403,83 @@
                 "height": 0
             },
             {
+                "name": "Create Environment",
+                "width": 0,
+                "height": 0
+            },
+            {
                 "name": "Create Application",
+                "width": 0,
+                "height": 0
+            },
+            {
+                "name": "Create New Env?",
+                "width": 0,
+                "height": 0
+            },
+            {
+                "name": "Wait for Environment",
+                "width": 0,
+                "height": 0
+            },
+            {
+                "name": "Deploy into Elastic Beanstalk",
+                "width": 0,
+                "height": 0
+            },
+            {
+                "name": "Environment Exists",
+                "width": 0,
+                "height": 0
+            },
+            {
+                "name": "Delete Application",
+                "width": 0,
+                "height": 0
+            },
+            {
+                "name": "Generate Unique Environment Name",
+                "width": 0,
+                "height": 0
+            },
+            {
+                "name": "Delete App?",
+                "width": 0,
+                "height": 0
+            },
+            {
+                "name": "Wait for Environment Again",
+                "width": 0,
+                "height": 0
+            },
+            {
+                "name": "Set Property (Updated)",
+                "width": 0,
+                "height": 0
+            },
+            {
+                "name": "Restart Environment Application Servers",
+                "width": 0,
+                "height": 0
+            },
+            {
+                "name": "Set Property",
+                "width": 0,
+                "height": 0
+            },
+            {
+                "name": "Application Exists",
+                "width": 0,
+                "height": 0
+            },
+            {
+                "name": "Set Property (First Run)",
                 "width": 0,
                 "height": 0
             }
         ],
         "type": "graph",
-        "name": "2ac74d46-bd2b-48ac-bba0-1000d036ae4b",
+        "name": "e999ffff-1170-431c-bc52-c1939eda6259",
         "children": [
             {
                 "type": "finish",
@@ -223,33 +492,14 @@
                 "showHidden": false,
                 "impersonationUseSudo": false,
                 "impersonationUseSsh": false,
-                "commandName": "Create Application",
-                "pluginName": "AWSElasticBeanstalk",
-                "pluginVersion": 1,
-                "properties": {
-                    "accessKeyId": "${p:system\/EC2AccessKeyId}",
-                    "secretKey": "${p:system\/EC2SecretKey}",
-                    "region": "EU_WEST_2",
-                    "appName": "${app.name}",
-                    "debugMode": ""
-                },
-                "type": "plugin",
-                "name": "Create Application",
-                "children": []
-            },
-            {
-                "allowFailure": false,
-                "useImpersonation": false,
-                "showHidden": false,
-                "impersonationUseSudo": false,
-                "impersonationUseSsh": false,
                 "commandName": "Application Exists",
-                "pluginName": "AWSElasticBeanstalk",
+                "pluginName": "Elastic Beanstalk",
                 "pluginVersion": 1,
                 "properties": {
                     "accessKeyId": "${p:system\/EC2AccessKeyId}",
                     "secretKey": "${p:system\/EC2SecretKey}",
-                    "region": "EU_WEST_2",
+                    "region": "",
+                    "defaultRegion": "${p:system\/EC2DefaultRegion}",
                     "appName": "${app.name}",
                     "debugMode": ""
                 },
@@ -263,14 +513,35 @@
                 "showHidden": false,
                 "impersonationUseSudo": false,
                 "impersonationUseSsh": false,
-                "commandName": "Environment Exists",
-                "pluginName": "AWSElasticBeanstalk",
+                "commandName": "Create Application",
+                "pluginName": "Elastic Beanstalk",
                 "pluginVersion": 1,
                 "properties": {
                     "accessKeyId": "${p:system\/EC2AccessKeyId}",
                     "secretKey": "${p:system\/EC2SecretKey}",
-                    "region": "EU_WEST_2",
+                    "region": "",
+                    "defaultRegion": "${p:system\/EC2DefaultRegion}",
                     "appName": "${app.name}",
+                    "debugMode": ""
+                },
+                "type": "plugin",
+                "name": "Create Application",
+                "children": []
+            },
+            {
+                "allowFailure": false,
+                "useImpersonation": false,
+                "showHidden": false,
+                "impersonationUseSudo": false,
+                "impersonationUseSsh": false,
+                "commandName": "Environment Exists",
+                "pluginName": "Elastic Beanstalk",
+                "pluginVersion": 1,
+                "properties": {
+                    "accessKeyId": "${p:system\/EC2AccessKeyId}",
+                    "secretKey": "${p:system\/EC2SecretKey}",
+                    "region": "",
+                    "defaultRegion": "${p:system\/EC2DefaultRegion}",
                     "envName": "${env.name}",
                     "debugMode": ""
                 },
@@ -285,17 +556,18 @@
                 "impersonationUseSudo": false,
                 "impersonationUseSsh": false,
                 "commandName": "Create Environment",
-                "pluginName": "AWSElasticBeanstalk",
+                "pluginName": "Elastic Beanstalk",
                 "pluginVersion": 1,
                 "properties": {
                     "accessKeyId": "${p:system\/EC2AccessKeyId}",
                     "secretKey": "${p:system\/EC2SecretKey}",
-                    "region": "EU_WEST_2",
+                    "region": "",
+                    "defaultRegion": "${p:system\/EC2DefaultRegion}",
                     "appName": "${app.name}",
                     "envName": "${env.name}",
-                    "cNAMEPrefix": "${domain.name}",
+                    "cNAMEPrefix": "${env.name}",
                     "stackName": "${p:prevStep\/UIP}",
-                    "configOptions": "aws:autoscaling:launchconfiguration->IamInstanceProfile->aws-elasticbeanstalk-ec2-role\naws:ec2:vpc->VPCId->vpc-0e4cbe1c67f454f92\naws:ec2:vpc->Subnets->subnet-06bc440ace5fd25fb",
+                    "configOptions": "aws:autoscaling:launchconfiguration->IamInstanceProfile->aws-elasticbeanstalk-ec2-role\n${env.opts}",
                     "debugMode": ""
                 },
                 "type": "plugin",
@@ -308,14 +580,56 @@
                 "showHidden": false,
                 "impersonationUseSudo": false,
                 "impersonationUseSsh": false,
-                "commandName": "List Stacks",
-                "pluginName": "AWSElasticBeanstalk",
+                "commandName": "Generate Unique Environment Name",
+                "pluginName": "Elastic Beanstalk",
                 "pluginVersion": 1,
                 "properties": {
                     "accessKeyId": "${p:system\/EC2AccessKeyId}",
                     "secretKey": "${p:system\/EC2SecretKey}",
-                    "region": "EU_WEST_2",
-                    "stackFilter": "java",
+                    "region": "",
+                    "defaultRegion": "${p:system\/EC2DefaultRegion}",
+                    "appName": "${app.name}",
+                    "envName": "${env.name}",
+                    "debugMode": ""
+                },
+                "type": "plugin",
+                "name": "Generate Unique Environment Name",
+                "children": []
+            },
+            {
+                "allowFailure": false,
+                "useImpersonation": false,
+                "showHidden": false,
+                "impersonationUseSudo": false,
+                "impersonationUseSsh": false,
+                "commandName": "Set Resource Property",
+                "pluginName": "DA Resource",
+                "pluginVersion": 30,
+                "properties": {
+                    "resource": "${resource.name}",
+                    "name": "beanstalk.envName",
+                    "value": "${Generate Unique Environment Name\/envName}",
+                    "isSecure": ""
+                },
+                "type": "plugin",
+                "name": "Set Resource Property",
+                "children": []
+            },
+            {
+                "allowFailure": false,
+                "useImpersonation": false,
+                "showHidden": false,
+                "impersonationUseSudo": false,
+                "impersonationUseSsh": false,
+                "commandName": "List Stacks",
+                "pluginName": "Elastic Beanstalk",
+                "pluginVersion": 1,
+                "properties": {
+                    "accessKeyId": "${p:system\/EC2AccessKeyId}",
+                    "secretKey": "${p:system\/EC2SecretKey}",
+                    "region": "",
+                    "defaultRegion": "${p:system\/EC2DefaultRegion}",
+                    "stackFilter": "Tomcat",
                     "userInterventionRequired": "true",
                     "keyColumnName": "Name",
                     "debugMode": ""
@@ -325,19 +639,25 @@
                 "children": []
             },
             {
+                "propertyName": "new.env",
+                "type": "switch",
+                "name": "Create New Env?",
+                "children": []
+            },
+            {
                 "allowFailure": false,
                 "useImpersonation": false,
                 "showHidden": false,
                 "impersonationUseSudo": false,
                 "impersonationUseSsh": false,
                 "commandName": "Wait for Environment",
-                "pluginName": "AWSElasticBeanstalk",
+                "pluginName": "Elastic Beanstalk",
                 "pluginVersion": 1,
                 "properties": {
                     "accessKeyId": "${p:system\/EC2AccessKeyId}",
                     "secretKey": "${p:system\/EC2SecretKey}",
-                    "region": "EU_WEST_2",
-                    "appName": "${app.name}",
+                    "region": "",
+                    "defaultRegion": "${p:system\/EC2DefaultRegion}",
                     "envName": "${env.name}",
                     "envStatus": "Ready",
                     "envHealth": "Green",
@@ -354,25 +674,158 @@
                 "impersonationUseSudo": false,
                 "impersonationUseSsh": false,
                 "commandName": "Deploy into Elastic Beanstalk",
-                "pluginName": "AWSElasticBeanstalk",
+                "pluginName": "Elastic Beanstalk",
                 "pluginVersion": 1,
                 "properties": {
                     "accessKeyId": "${p:system\/EC2AccessKeyId}",
                     "secretKey": "${p:system\/EC2SecretKey}",
-                    "region": "EU_WEST_2",
+                    "region": "",
+                    "defaultRegion": "${p:system\/EC2DefaultRegion}",
                     "appName": "${app.name}",
                     "envName": "${env.name}",
-                    "versionLabel": "1.0",
-                    "baseDir": "C:\\Temp\\java-web-app\\target",
-                    "versionFile": "java-web-app-0.0.1-SNAPSHOT.war",
+                    "versionLabel": "${app.version}",
+                    "baseDir": "${file.baseDir}",
+                    "versionFile": "${file.name}",
                     "s3BucketName": "${s3.bucket}",
-                    "s3KeyPrefix": "JWA",
-                    "checkForExisting": "true",
+                    "s3KeyPrefix": "${s3.prefix}",
+                    "overwriteVersion": "true",
                     "waitForEnvironment": "true",
                     "debugMode": ""
                 },
                 "type": "plugin",
                 "name": "Deploy into Elastic Beanstalk",
+                "children": []
+            },
+            {
+                "allowFailure": false,
+                "useImpersonation": false,
+                "showHidden": false,
+                "impersonationUseSudo": false,
+                "impersonationUseSsh": false,
+                "commandName": "Restart Environment Application Servers",
+                "pluginName": "Elastic Beanstalk",
+                "pluginVersion": 1,
+                "properties": {
+                    "accessKeyId": "${p:system\/EC2AccessKeyId}",
+                    "secretKey": "${p:system\/EC2SecretKey}",
+                    "region": "",
+                    "defaultRegion": "${p:system\/EC2DefaultRegion}",
+                    "envName": "${env.name}",
+                    "debugMode": ""
+                },
+                "type": "plugin",
+                "name": "Restart Environment Application Servers",
+                "children": []
+            },
+            {
+                "allowFailure": false,
+                "useImpersonation": false,
+                "showHidden": false,
+                "impersonationUseSudo": false,
+                "impersonationUseSsh": false,
+                "commandName": "Terminate Environment",
+                "pluginName": "Elastic Beanstalk",
+                "pluginVersion": 1,
+                "properties": {
+                    "accessKeyId": "${p:system\/EC2AccessKeyId}",
+                    "secretKey": "${p:system\/EC2SecretKey}",
+                    "region": "",
+                    "defaultRegion": "${p:system\/EC2DefaultRegion}",
+                    "envName": "${env.name}",
+                    "terminateResources": "true",
+                    "forceTerminate": "true",
+                    "debugMode": ""
+                },
+                "type": "plugin",
+                "name": "Terminate Environment",
+                "children": []
+            },
+            {
+                "propertyName": "delete.app",
+                "type": "switch",
+                "name": "Delete App?",
+                "children": []
+            },
+            {
+                "allowFailure": false,
+                "useImpersonation": false,
+                "showHidden": false,
+                "impersonationUseSudo": false,
+                "impersonationUseSsh": false,
+                "commandName": "Delete Application",
+                "pluginName": "Elastic Beanstalk",
+                "pluginVersion": 1,
+                "properties": {
+                    "accessKeyId": "${p:system\/EC2AccessKeyId}",
+                    "secretKey": "${p:system\/EC2SecretKey}",
+                    "region": "",
+                    "defaultRegion": "${p:system\/EC2DefaultRegion}",
+                    "appName": "${app.name}",
+                    "debugMode": ""
+                },
+                "type": "plugin",
+                "name": "Delete Application",
+                "children": []
+            },
+            {
+                "allowFailure": false,
+                "useImpersonation": false,
+                "showHidden": false,
+                "impersonationUseSudo": false,
+                "impersonationUseSsh": false,
+                "commandName": "Get Resource Property",
+                "pluginName": "DA Resource",
+                "pluginVersion": 30,
+                "properties": {
+                    "resource": "${resource.name}",
+                    "name": "beanstalk.envName"
+                },
+                "type": "plugin",
+                "name": "Get Resource Property",
+                "children": []
+            },
+            {
+                "propertyName": "env.name",
+                "propertyValue": "${p:resource\/beanstalk.envName}",
+                "type": "createRuntimeProperty",
+                "name": "Set Property",
+                "children": []
+            },
+            {
+                "propertyName": "env.name",
+                "propertyValue": "Test",
+                "type": "createRuntimeProperty",
+                "name": "Set Property (First Run)",
+                "children": []
+            },
+            {
+                "propertyName": "env.name",
+                "propertyValue": "${Generate Unique Environment Name\/envName}",
+                "type": "createRuntimeProperty",
+                "name": "Set Property (Updated)",
+                "children": []
+            },
+            {
+                "allowFailure": false,
+                "useImpersonation": false,
+                "showHidden": false,
+                "impersonationUseSudo": false,
+                "impersonationUseSsh": false,
+                "commandName": "Wait for Environment",
+                "pluginName": "Elastic Beanstalk",
+                "pluginVersion": 1,
+                "properties": {
+                    "accessKeyId": "${p:system\/EC2AccessKeyId}",
+                    "secretKey": "${p:system\/EC2SecretKey}",
+                    "region": "",
+                    "defaultRegion": "${p:system\/EC2DefaultRegion}",
+                    "envName": "${env.name}",
+                    "envStatus": "Ready",
+                    "envHealth": "Green",
+                    "debugMode": ""
+                },
+                "type": "plugin",
+                "name": "Wait for Environment Again",
                 "children": []
             }
         ]
