@@ -997,7 +997,7 @@
 
     <step-type name='Generate Unique Environment Name'>
         <description>
-            Generates a valid and unique Elastic Beanstalk Environment name by checking if an environment of same
+            Generates a valid Elastic Beanstalk Environment name, checking if an environment of same
             name already exists and set the output property "envName" accordingly.
         </description>
         <properties>

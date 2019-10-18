@@ -1,6 +1,6 @@
 // --------------------------------------------------------------------------------
-// Generates a valid and unique Beanstalk environment name by checking if environment
-// of same name already exists.
+// Generates a valid Elastic Beanstalk Environment name, checking if an environment of same
+// name already exists and set the output property "envName" accordingly.
 // --------------------------------------------------------------------------------
 
 import com.serena.air.StepFailedException
@@ -77,9 +77,14 @@ try {
 
     String generatedEnvName = new String("${appName}-${envName}").replaceAll("[^A-Za-z0-9-]", "");
     if (debugMode) {
-        helper.log("Generated Beanstalk Environment name: \"${generatedEnvName}\"")
+        helper.log("Checking Beanstalk Environment name: \"${generatedEnvName}\"")
     }
-    int index = 1;
+    if (helper.applicationEnvironmentExists(appName, generatedEnvName)) {
+        println "ERROR - Beanstalk Environment name \"${generatedEnvName}\" already exists"
+        System.exit(1)
+    }
+    /*int index = 1;
+    TODO: allow multiple environments to exist
     String tmpEnvName = generatedEnvName
     while (helper.applicationEnvironmentExists(appName, generatedEnvName)) {
         if (debugMode) {
@@ -89,9 +94,9 @@ try {
         if (debugMode) {
             helper.log("Trying new name: \"${generatedEnvName}\"...")
         }
-    }
+    }*/
 
-    helper.log("Generated unique Beanstalk Environment name: \"${generatedEnvName}\"")
+    helper.log("Generated Beanstalk Environment name: \"${generatedEnvName}\"")
 
     println "----------------------------------------"
     println "-- STEP OUTPUTS"
