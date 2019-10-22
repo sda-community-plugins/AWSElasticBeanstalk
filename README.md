@@ -37,9 +37,10 @@ Download the latest version from the _release_ directory and install into Deploy
 
 The main step of the plugin is **Deploy into Elastic Beanstalk** - this step works by uploading a web application 
 (e.g. Java WAR file) into an Amazon S3 storage bucket and then creating a new version of the Elastic Beanstalk application using it. 
-It then deploys this version into the environment you specify. You can either create the Beanstalk application and
-Beanstalk environment from Amazon's web console or by using the steps in this plugin.
-
+It then deploys this version into the environment you specify and (optionally) waits until is is available. You can 
+either create the Beanstalk application and environment directly using this plugin or use Amazon's web console to
+create them first.
+                  
 Note: You will need to know the name of an S3 bucket to upload to - this can be found from Amazon's S3 console.
 
 You will also need to create two Deployment Automation 
