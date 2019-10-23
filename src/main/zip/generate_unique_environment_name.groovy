@@ -76,6 +76,7 @@ try {
     helper.log("Using region \"${helper.getAWSRegion().getName()}\"")
 
     String generatedEnvName = new String("${appName}-${envName}").replaceAll("[^A-Za-z0-9-]", "");
+    if (generatedEnvName.length() >= 40) generatedEnvName = generatedEnvName.substring(0, 40)
     if (debugMode) {
         helper.log("Checking Beanstalk Environment name: \"${generatedEnvName}\"")
     }

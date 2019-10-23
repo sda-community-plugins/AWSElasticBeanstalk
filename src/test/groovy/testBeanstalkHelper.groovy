@@ -10,8 +10,8 @@ import com.amazonaws.services.elasticbeanstalk.model.CreateApplicationVersionReq
 import com.amazonaws.services.elasticbeanstalk.model.S3Location
 import com.amazonaws.services.elasticbeanstalk.model.UpdateEnvironmentRequest
 
-String accessKeyId = ""
-String secretKey = ""
+String accessKeyId = System.getenv("AWS_ACCESS_KEY")
+String secretKey = System.getenv("AWS_SECRET")
 String region = "EU_WEST_2"
 String s3BucketName = "elasticbeanstalk-eu-west-1-941683627343"
 String s3KeyPrefix = "upload/"
