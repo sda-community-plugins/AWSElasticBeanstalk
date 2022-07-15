@@ -22,7 +22,7 @@
         <!-- change this when you create a new version of your plugin -->
         <plugin.major.version>1</plugin.major.version>
         <plugin.build.version>dev</plugin.build.version>
-        <aws.java.sdk.version>1.11.649</aws.java.sdk.version>
+        <aws.java.sdk.version>1.12.261</aws.java.sdk.version>
     </properties>
 
     <repositories>
